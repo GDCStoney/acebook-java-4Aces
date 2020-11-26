@@ -16,6 +16,6 @@ public class DatabaseLoader implements CommandLineRunner {
 
     @Override
     public void run(String... strings) throws Exception {
-        this.repository.save(new Post("This is a test from DataLoader!"));
+        this.repository.save(new Post(null, "This is a test from DataLoader!"));
     }
 }

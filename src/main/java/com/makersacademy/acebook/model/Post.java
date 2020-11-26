@@ -20,7 +20,8 @@ public class Post {
 
     private Post() {}
 
-    public Post(String content) {
+    public Post(Long id, String content) {
+        this.id = id;
         this.content = content;
     }
 
