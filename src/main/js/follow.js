@@ -1,4 +1,4 @@
-module.exports = function follow(api, rootPath, reArray) {
+module.exports = function follow(api, rootPath, relArray) {
     const root = api({
         method: 'GET',
         path: rootPath
@@ -22,6 +22,11 @@ module.exports = function follow(api, rootPath, reArray) {
             if(typeof arrayItem === 'string') {
                 return api({
                     method: 'GET',
+                    path: response.entity._links[rel].href
+                });
+            } else {
+                return api({
+                    method: 'GET',
                     path: response.entity._links[rel].href,
                     params: arrayItem.params
                 });
@@ -29,7 +34,7 @@ module.exports = function follow(api, rootPath, reArray) {
         });
     }
 
-    function hadEmbeddedRel(entity, rel) {
+    function hasEmbeddedRel(entity, rel) {
         return entity._embedded && entity._embedded.hasOwnProperty(rel);
     }
 };

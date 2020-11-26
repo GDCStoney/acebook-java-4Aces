@@ -1,14 +1,17 @@
-import React from 'react';
-import Posts from './posts'
-const client = require('../client');
+const React = require('react');
+const ReactDOM = require('react-dom');
+const client = require('./client');
 
-const follow = require('../follow');
+const follow = require('./follow');
 
 const root = '/api';
 
-class PostsBuilder extends React.Component {
+import posts from './posts/posts'
+import PostsBuilder from './posts/postsBuilder'
+
+class App extends React.Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.state = {posts: [], attributes: [], pageSize: 10, links: {}};
     }
 
@@ -34,17 +37,41 @@ class PostsBuilder extends React.Component {
         });
     }
 
+
     componentDidMount() {
         this.loadFromServer(this.state.pageSize);
     }
 
-	render() {
-		return (
-            <Posts posts={this.state.posts}
-                links={this.state.links}
-                pageSize={this.state.pageSize} />
-		)
-	}
+    render() {
+        return (
+            <div>
+                <CreateDialog />
+                <PostsBuilder />
+            </div>
+        )
+    }
 }
 
-export default PostsBuilder;
+ReactDOM.render(
+	<App />,
+	document.getElementById('app')
+)
+
+class CreateDialog extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const newPost = {};
+
+        //Navigate away from the dialog to hide it
+        window.location = "#";
+    }
+
+    render() {
+
+    }
+}
