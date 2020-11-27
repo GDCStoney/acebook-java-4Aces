@@ -51,7 +51,7 @@ class App extends React.Component {
     }
 
     onNavigate(navUri) {
-        client({mehtod: 'GET', path: navUri}).then(postCollection => {
+        client({method: 'GET', path: navUri}).then(postCollection => {
             this.setState({
                 posts: postCollection.entity._embedded.posts,
                 attributes: this.state.attributes,
@@ -91,7 +91,6 @@ class App extends React.Component {
     render() {
         return (
             <div>
-                <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
                 <PostList posts={this.state.posts}
                     links={this.state.links}
                     pageSize={this.state.pageSize}
@@ -99,6 +98,7 @@ class App extends React.Component {
                     onNavigate={this.onNavigate}
                     updatePageSize={this.updatePageSize}
                 />
+                <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
             </div>
         )
     }
@@ -119,7 +119,7 @@ class PostList extends React.Component {
 
         const pageSize = ReactDOM.findDOMNode(this.refs.pageSize).value;
         if (/^[0-9]+$/.test(pageSize)) {
-            this.props.updatePageSize(pageSize);
+            this.props.updatePageSize(parseInt(pageSize));
         } else {
             ReactDOM.findDOMNode(this.refs.pageSize).value =
                 pageSize.substring(0, pageSize.length - 1);
@@ -157,7 +157,7 @@ class PostList extends React.Component {
         }
 
         if ("prev" in this.props.links) {
-            navLinks.push(<button key="prev" onClick={this.handleNavPrev}>$lt;</button>);
+            navLinks.push(<button key="prev" onClick={this.handleNavPrev}>&lt;</button>);
         }
 
         if ("next" in this.props.links) {
@@ -220,7 +220,7 @@ class CreateDialog extends React.Component {
         e.preventDefault();
         const newPost = {};
         this.props.attributes.forEach(attribute => {
-            newPost[attribute] = ReactDom.findDOMNode(this.refs[attribute]).value.trim();
+            newPost[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
         });
         this.props.onCreate(newPost);
 
@@ -240,8 +240,10 @@ class CreateDialog extends React.Component {
 
         return (
             <div>
-                <a href="#createPost">Create</a>
-                <div id="CreatePost" className="modalDialog">
+                <div>
+                    <a href="#createPost">Create</a>
+                </div>
+                <div id="createPost" className="modalDialog">
                     <div>
                         <a href="#" title="Close" className="close">X</a>
                         <h2>Create new post</h2>

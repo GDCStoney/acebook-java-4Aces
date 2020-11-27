@@ -8,7 +8,7 @@ define(function() {
         },
         write: function(obj /*, opts */) {
             //If this is an Array, extracts the self URI and then join using a newline
-            if (obj instanceof Array) {
+             if (obj instanceof Array) {
                 return obj.map(resource => resource._links.self.href).join('\n');
             } else {
                 return obj._links.self.href;

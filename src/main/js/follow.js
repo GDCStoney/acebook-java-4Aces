@@ -12,6 +12,8 @@ module.exports = function follow(api, rootPath, relArray) {
     function traverseNext (root, rel, arrayItem) {
         return root.then(function (response) {
             if (hasEmbeddedRel(response.entity, rel)) {
+                console.log('embedded');
+                console.log(response);
                 return response.entity._embedded[rel];
             }
 
@@ -20,14 +22,17 @@ module.exports = function follow(api, rootPath, relArray) {
             }
 
             if(typeof arrayItem === 'string') {
+            console.log('string');
+            console.log(arrayItem)
                 return api({
                     method: 'GET',
                     path: response.entity._links[rel].href
                 });
             } else {
+                let newPath = (response.entity._links[rel].href).split('{')[0] + '?size=' + parseInt(arrayItem.params.size);
                 return api({
                     method: 'GET',
-                    path: response.entity._links[rel].href,
+                    path: newPath,
                     params: arrayItem.params
                 });
             }
