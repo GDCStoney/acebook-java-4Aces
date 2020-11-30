@@ -13,10 +13,12 @@ input.field {
     width: 90%;
 }
 
+.center {
+    text-align: center
+}
+
 table {
     border-collapse: collapse;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 td, th {

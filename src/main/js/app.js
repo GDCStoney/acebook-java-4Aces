@@ -150,7 +150,9 @@ class App extends React.Component {
                     updatePageSize={this.updatePageSize}
                     onUpdate={this.onUpdate}
                 />
-                <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
+                <div>
+                    <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
+                </div>
             </div>
         )
     }
@@ -302,7 +304,7 @@ class CreateDialog extends React.Component {
 
         return (
             <div>
-                <div>
+                <div className="center">
                     <a href="#createPost">Create</a>
                 </div>
                 <div id="createPost" className="modalDialog">
@@ -339,7 +341,6 @@ class UpdateDialog extends React.Component {
     }
 
     render() {
-        console.log(this.props);
         const inputs = this.props.attributes.map(attribute =>
             <p key={this.props.post.entity[attribute]}>
                 <input type="text" placeholder={attribute}
