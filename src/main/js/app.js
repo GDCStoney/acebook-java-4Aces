@@ -3,6 +3,7 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const client = require('./client');
+const when = require('./when');
 
 const follow = require('./follow');
 
@@ -16,6 +17,7 @@ class App extends React.Component {
         this.onNavigate = this.onNavigate.bind(this);
         this.updatePageSize = this.updatePageSize.bind(this);
         this.onCreate = this.onCreate.bind(this);
+        this.onUpdate = this.onUpdate.bind(this);
     }
 
     loadFromServer(pageSize) {
@@ -28,35 +30,55 @@ class App extends React.Component {
                 headers: {'Accept': 'application/schema+json'}
             }).then(schema => {
                 this.schema = schema.entity;
+                this.links = postCollection.entity._links;
                 return postCollection;
             });
         }).then(postCollection => {
+            return postCollection.entity._embedded.posts.map(post =>
+                client({
+                    method: 'GET',
+                    path: post._links.self.href
+                })
+            );
+        }).then(postPromises => {
+            return when.all(postPromises);
+        }).then(posts => {
             this.setState({
-                posts: postCollection.entity._embedded.posts,
+                posts: posts,
                 attributes: Object.keys(this.schema.properties),
                 pageSize: pageSize,
-                links: postCollection.entity._links
+                links: this.links
             });
         });
     }
 
-    componentDidMount() {
-        this.loadFromServer(this.state.pageSize);
-    }
-
     onDelete(post) {
-        client({method: 'DELETE', path: post._links.self.href}).then(response => {
+        client({method: 'DELETE', path: post.entity._links.self.href}).then(response => {
             this.loadFromServer(this.state.pageSize);
         });
     }
 
     onNavigate(navUri) {
-        client({method: 'GET', path: navUri}).then(postCollection => {
+        client({
+            method: 'GET',
+            path: navUri
+        }).then(postCollection => {
+            this.links = postCollection.entity._links;
+
+            return postCollection.entity._embedded.posts.map(employee =>
+                client({
+                    method: 'GET',
+                    path: post._links.self.href
+                })
+            );
+        }).then(postPromises => {
+            return when.all(postPromises);
+        }).then(posts => {
             this.setState({
-                posts: postCollection.entity._embedded.posts,
-                attributes: this.state.attributes,
+                posts: posts,
+                attributes: Object.keys(this.schema.properties),
                 pageSize: this.state.pageSize,
-                links: postCollection.entity._links
+                links: this.links
             });
         });
     }
@@ -68,16 +90,18 @@ class App extends React.Component {
     }
 
     onCreate(newPost) {
-        follow(client, root, ['posts']).then(postCollection => {
+        const self = this;
+
+        follow(client, root, ['posts']).then(response => {
             return client({
                 method: 'POST',
-                path: postCollection.entity._links.self.href,
+                path: response.entity._links.self.href,
                 entity: newPost,
                 headers: {'Content-Type': 'application/json'}
             });
         }).then(response => {
             return follow(client, root, [
-                {rel: 'posts', params: {'size': this.state.pageSize}}
+                {rel: 'posts', params: {'size': self.state.pageSize}}
             ]);
         }).then(response => {
             if (typeof response.entity._links.last !== "undefined") {
@@ -88,15 +112,40 @@ class App extends React.Component {
         });
     }
 
-    render() {
+    onUpdate(post, updatedPost) {
+        client({
+            method: 'PUT',
+            path: post.entity._links.self.href,
+            entity: updatedPost,
+            headers: {
+                'Content-Type': 'application/json',
+                'If-Match': post.headers.Etag
+            }
+        }).then(response => {
+            this.loadFromServer(this.state.pageSize);
+        }, response => {
+            if (response.status.code === 412) {
+                alert('DENIED: Unable to update ' +
+                    post.entity._links.self.href + '. Your copy is stale.');
+            }
+        });
+    }
+
+    componentDidMount() {
+        this.loadFromServer(this.state.pageSize);
+    }
+
+   render() {
         return (
             <div>
                 <PostList posts={this.state.posts}
                     links={this.state.links}
+                    attributes={this.attributes}
                     pageSize={this.state.pageSize}
                     onDelete={this.onDelete}
                     onNavigate={this.onNavigate}
                     updatePageSize={this.updatePageSize}
+                    onUpdate={this.onUpdate}
                 />
                 <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
             </div>
@@ -148,7 +197,11 @@ class PostList extends React.Component {
 
     render() {
         const posts = this.props.posts.map(post =>
-            <Post key={post._links.self.href} post={post} onDelete={this.props.onDelete}/>
+            <Post key={post._links.self.href}
+                post={post}
+                attributes={this.props.attributes}
+                onDelete={this.props.onDelete}
+                onUpdate={this.props.onUpdate}/>
         );
 
         const navLinks = [];
@@ -176,6 +229,7 @@ class PostList extends React.Component {
                         <tr>
                             <th>content</th>
                             <th></th>
+                            <th></th>
                         </tr>
                         {posts}
                     </tbody>
@@ -202,6 +256,11 @@ class Post extends React.Component {
         return (
             <tr>
                 <td>{this.props.post.content}</td>
+                <td>
+                    <UpdateDialog post={this.props.post}
+                        attributes={this.props.attributes}
+                        onUpdate={this.props.onUpdate}/>
+                </td>
                 <td>
                     <button onClick={this.handleDelete}>Del</button>
                 </td>
@@ -250,6 +309,53 @@ class CreateDialog extends React.Component {
                         <form>
                             {inputs}
                             <button onClick={this.handleSubmit}>Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+
+class UpdateDialog extends React.Component {
+    constructor(props) {
+        super(props);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+
+        const updatedPost = {};
+
+        this.props.attributes.forEach(attribute => {
+            updatedPost[attribute] =ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+        });
+        this.props.onUpdate(this.props.post, updatedPost);
+        window.location="#";
+    }
+
+    render() {
+        const inputs = this.props.attributes.map(attribute =>
+            <p key={this.props.post.entity[attribute]}>
+                <input type="text" placeholder={attribute}
+                    defaultValue={this.props.post.entity[attribute]}
+                    ref={attribute} className="field"/>
+            </p>
+        );
+
+        const dialogId = "updatePost-" + this.props.post.entity._links.self.href;
+
+        return (
+            <div key={this.props.post._links.self.href}>
+                <a href={"#" + dialogId}>Update</a>
+                <div id={dialogId} className="modalDialog">
+                    <div>
+                        <a href="#" title="Close" className="close">X</a>
+                        <h2>Update a Post</h2>
+                        <form>
+                            {inputs}
+                            <button onClick={this.handleSubmit}>Update</button>
                         </form>
                     </div>
                 </div>
