@@ -3,7 +3,7 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const client = require('./client');
-const when = require('./when');
+const when = require('when');
 
 const follow = require('./follow');
 
@@ -53,7 +53,10 @@ class App extends React.Component {
     }
 
     onDelete(post) {
-        client({method: 'DELETE', path: post.entity._links.self.href}).then(response => {
+        client({
+            method: 'DELETE',
+            path: post.entity._links.self.href
+        }).then(response => {
             this.loadFromServer(this.state.pageSize);
         });
     }
@@ -65,7 +68,7 @@ class App extends React.Component {
         }).then(postCollection => {
             this.links = postCollection.entity._links;
 
-            return postCollection.entity._embedded.posts.map(employee =>
+            return postCollection.entity._embedded.posts.map(post =>
                 client({
                     method: 'GET',
                     path: post._links.self.href
@@ -140,7 +143,7 @@ class App extends React.Component {
             <div>
                 <PostList posts={this.state.posts}
                     links={this.state.links}
-                    attributes={this.attributes}
+                    attributes={this.state.attributes}
                     pageSize={this.state.pageSize}
                     onDelete={this.onDelete}
                     onNavigate={this.onNavigate}
@@ -197,7 +200,7 @@ class PostList extends React.Component {
 
     render() {
         const posts = this.props.posts.map(post =>
-            <Post key={post._links.self.href}
+            <Post key={post.entity._links.self.href}
                 post={post}
                 attributes={this.props.attributes}
                 onDelete={this.props.onDelete}
@@ -255,7 +258,7 @@ class Post extends React.Component {
     render() {
         return (
             <tr>
-                <td>{this.props.post.content}</td>
+                <td>{this.props.post.entity.content}</td>
                 <td>
                     <UpdateDialog post={this.props.post}
                         attributes={this.props.attributes}
@@ -329,13 +332,14 @@ class UpdateDialog extends React.Component {
         const updatedPost = {};
 
         this.props.attributes.forEach(attribute => {
-            updatedPost[attribute] =ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+            updatedPost[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
         });
         this.props.onUpdate(this.props.post, updatedPost);
         window.location="#";
     }
 
     render() {
+        console.log(this.props);
         const inputs = this.props.attributes.map(attribute =>
             <p key={this.props.post.entity[attribute]}>
                 <input type="text" placeholder={attribute}
@@ -347,7 +351,7 @@ class UpdateDialog extends React.Component {
         const dialogId = "updatePost-" + this.props.post.entity._links.self.href;
 
         return (
-            <div key={this.props.post._links.self.href}>
+            <div key={this.props.post.entity._links.self.href}>
                 <a href={"#" + dialogId}>Update</a>
                 <div id={dialogId} className="modalDialog">
                     <div>

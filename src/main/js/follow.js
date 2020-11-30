@@ -12,8 +12,6 @@ module.exports = function follow(api, rootPath, relArray) {
     function traverseNext (root, rel, arrayItem) {
         return root.then(function (response) {
             if (hasEmbeddedRel(response.entity, rel)) {
-                console.log('embedded');
-                console.log(response);
                 return response.entity._embedded[rel];
             }
 
@@ -22,8 +20,6 @@ module.exports = function follow(api, rootPath, relArray) {
             }
 
             if(typeof arrayItem === 'string') {
-            console.log('string');
-            console.log(arrayItem)
                 return api({
                     method: 'GET',
                     path: response.entity._links[rel].href
