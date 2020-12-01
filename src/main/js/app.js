@@ -141,19 +141,26 @@ class App extends React.Component {
    render() {
         return (
             <div>
-                <PostList posts={this.state.posts}
-                    links={this.state.links}
-                    attributes={this.state.attributes}
-                    pageSize={this.state.pageSize}
-                    onDelete={this.onDelete}
-                    onNavigate={this.onNavigate}
-                    updatePageSize={this.updatePageSize}
-                    onUpdate={this.onUpdate}
-                />
                 <div>
-                    <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
+                    <form action="/logout" method="get">
+                        <input type="submit" value="Logout"/>
+                    </form>
                 </div>
-            </div>
+                <div>
+                    <PostList posts={this.state.posts}
+                        links={this.state.links}
+                        attributes={this.state.attributes}
+                        pageSize={this.state.pageSize}
+                        onDelete={this.onDelete}
+                        onNavigate={this.onNavigate}
+                        updatePageSize={this.updatePageSize}
+                        onUpdate={this.onUpdate}
+                    />
+                    <div>
+                        <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
+                    </div>
+                </div>
+             </div>
         )
     }
 }
